@@ -1,0 +1,39 @@
+<!--
+  Adobe Journey Optimizer (AJO) — countdown timer embed
+  =====================================================
+  Paste this into a *custom HTML component* in AJO's email designer
+  (drag "HTML" from the content components palette). Do NOT paste it into
+  a rich-text/structured component — the designer may rewrite the URL.
+
+  Before sending:
+  1. Replace https://YOUR-DEPLOYMENT.vercel.app with your deployed origin.
+  2. Set the `end` param to your real deadline in UTC
+     (e.g. Aug 1, 2026 midnight ET = 2026-08-01T04:00:00Z).
+  3. The {{profile.personID}} expression below is a PLACEHOLDER — the exact
+     personalization attribute path depends on your XDM schema / identity
+     setup (it might be {{profile.personalEmail.address}}, an identity map
+     entry, etc.). Ask your AJO admin which attribute uniquely identifies
+     the recipient. It is used ONLY for cache-busting uniqueness in
+     email-client image proxies; the server never logs or renders it.
+  4. Keep the alt text in sync with the real deadline — it's what
+     recipients see with images blocked.
+-->
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr>
+    <td align="center" style="padding: 0;">
+      <img
+        src="https://YOUR-DEPLOYMENT.vercel.app/api/timer?end=2026-08-01T04:00:00Z&uid={{profile.personID}}"
+        width="320"
+        height="90"
+        alt="Sale ends August 1"
+        style="display:block; border:0; outline:none; text-decoration:none;"
+      />
+    </td>
+  </tr>
+  <tr>
+    <td align="center" style="padding: 8px 0 0 0; font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #111111;">
+      <!-- Live-text fallback: always present, works with images blocked -->
+      Ends Friday, August 1 at midnight ET
+    </td>
+  </tr>
+</table>
