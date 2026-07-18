@@ -58,7 +58,7 @@ function parseEndParam(raw: string | null): { endMs: number } | { error: string 
   return { endMs };
 }
 
-export function GET(request: NextRequest): Response {
+export async function GET(request: NextRequest): Promise<Response> {
   const params = request.nextUrl.searchParams;
 
   const parsed = parseEndParam(params.get('end'));
@@ -74,7 +74,7 @@ export function GET(request: NextRequest): Response {
 
   let gifBuffer: Buffer;
   try {
-    gifBuffer = renderCountdownGif(parsed.endMs, theme);
+    gifBuffer = await renderCountdownGif(parsed.endMs, theme);
   } catch {
     // Internal failure must never surface a broken-image icon in an email.
     try {

@@ -146,6 +146,16 @@ and select them with `?theme=<name>`.
 
 Details in `fonts/README.md`.
 
+### Creative wraps (background art behind the timer)
+
+A theme can point at a full-bleed background PNG
+(`background.imagePath`) and reserve a rectangle for the digits
+(`layout.timerBox`), so the creative team designs around a known timer
+zone — see the `goodgood` theme for a working example (placeholder art)
+and **`creative/SPECS.md`** for the exact deliverable spec to hand to
+design. A missing or unreadable PNG falls back to the flat background
+color; it never breaks the endpoint.
+
 ## Adobe integration
 
 See `adobe-embed/` for copy-paste AJO and Campaign snippets and an

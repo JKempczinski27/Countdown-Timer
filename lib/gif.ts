@@ -1,4 +1,11 @@
-import { createCanvas, type Canvas, type SKRSContext2D } from '@napi-rs/canvas';
+import path from 'node:path';
+import {
+  createCanvas,
+  loadImage,
+  type Image,
+  type Canvas,
+  type SKRSContext2D,
+} from '@napi-rs/canvas';
 import { GIFEncoder, quantize, applyPalette, type PaletteColor } from 'gifenc';
 import type { ThemeTokens } from '@/brand.config';
 import { ensureFontRegistered, FONT_FAMILY } from './fonts';
@@ -12,6 +19,73 @@ const MAX_DISPLAY_DAYS = 99;
 interface Segment {
   value: string;
   label: string;
+}
+
+interface Box {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** Decoded background images, cached per path for the process lifetime. */
+const backgroundCache = new Map<string, Image>();
+
+/**
+ * Image decoding in @napi-rs/canvas is asynchronous — drawImage before
+ * the decode completes silently draws nothing — so backgrounds must be
+ * awaited via loadImage before any frame is drawn.
+ */
+async function loadBackgroundImage(imagePath: string): Promise<Image | null> {
+  const cached = backgroundCache.get(imagePath);
+  if (cached) return cached;
+
+  try {
+    const decoded = await loadImage(path.join(process.cwd(), imagePath));
+    if (decoded.width > 0 && decoded.height > 0) {
+      // Only successful decodes are cached — a transient read/decode
+      // failure degrades one response to the flat-color fallback and is
+      // retried on the next request, rather than poisoning the process.
+      backgroundCache.set(imagePath, decoded);
+      return decoded;
+    }
+  } catch {
+    // Missing/corrupt creative must never take the endpoint down; the
+    // flat theme background color is the fallback.
+  }
+  return null;
+}
+
+/** Physical-pixel rectangle the countdown row (or expired text) fits in. */
+function timerBoxFor(theme: ThemeTokens): Box {
+  const box = theme.layout.timerBox ?? {
+    x: 0,
+    y: 0,
+    width: theme.layout.width,
+    height: theme.layout.height,
+  };
+  return {
+    x: box.x * SCALE,
+    y: box.y * SCALE,
+    width: box.width * SCALE,
+    height: box.height * SCALE,
+  };
+}
+
+function drawBackground(
+  ctx: SKRSContext2D,
+  theme: ThemeTokens,
+  image: Image | null,
+  fallbackColor: string,
+): void {
+  const w = theme.layout.width * SCALE;
+  const h = theme.layout.height * SCALE;
+  if (image) {
+    ctx.drawImage(image, 0, 0, w, h);
+  } else {
+    ctx.fillStyle = fallbackColor;
+    ctx.fillRect(0, 0, w, h);
+  }
 }
 
 function pad2(n: number): string {
@@ -72,20 +146,19 @@ function drawTracked(
 function drawCountdownFrame(
   ctx: SKRSContext2D,
   theme: ThemeTokens,
+  background: Image | null,
   remainingSeconds: number,
 ): void {
   const { colors, typography, layout } = theme;
-  const w = layout.width * SCALE;
-  const h = layout.height * SCALE;
 
-  ctx.fillStyle = colors.background;
-  ctx.fillRect(0, 0, w, h);
+  drawBackground(ctx, theme, background, colors.background);
 
+  const box = timerBoxFor(theme);
   const segments = segmentsFor(remainingSeconds, theme);
   ctx.textBaseline = 'alphabetic';
 
   // Measure at configured token sizes, then scale everything down
-  // uniformly if the row would overflow the canvas — token values are
+  // uniformly if the row would overflow the timer box — token values are
   // brand preferences, but the render must always fit.
   const measure = (digitPx: number, gapPx: number) => {
     ctx.font = `${typography.digitWeight} ${digitPx}px ${FONT_FAMILY}`;
@@ -98,7 +171,7 @@ function drawCountdownFrame(
 
   const baseDigitSize = typography.digitSizePx * SCALE;
   const baseGap = layout.segmentGapPx * SCALE;
-  const maxRowWidth = w * 0.94;
+  const maxRowWidth = box.width * 0.94;
   const baseMeasure = measure(baseDigitSize, baseGap);
   const fit = Math.min(1, maxRowWidth / baseMeasure.totalWidth);
 
@@ -110,9 +183,9 @@ function drawCountdownFrame(
 
   const { digitWidth, sepWidth, totalWidth } =
     fit === 1 ? baseMeasure : measure(digitSize, gap);
-  const startX = (w - totalWidth) / 2;
+  const startX = box.x + (box.width - totalWidth) / 2;
 
-  const digitBaselineY = h * 0.52;
+  const digitBaselineY = box.y + box.height * 0.52;
   const labelBaselineY = digitBaselineY + labelSize * 1.6;
 
   let x = startX;
@@ -146,18 +219,36 @@ function drawCountdownFrame(
   }
 }
 
-function drawExpiredFrame(ctx: SKRSContext2D, theme: ThemeTokens): void {
-  const { colors, typography, layout, expired } = theme;
-  const w = layout.width * SCALE;
-  const h = layout.height * SCALE;
+function drawExpiredFrame(
+  ctx: SKRSContext2D,
+  theme: ThemeTokens,
+  background: Image | null,
+): void {
+  const { colors, typography, expired } = theme;
 
-  ctx.fillStyle = colors.expiredBackground;
-  ctx.fillRect(0, 0, w, h);
+  drawBackground(ctx, theme, background, colors.expiredBackground);
+
+  const box = timerBoxFor(theme);
+  const baseSize = typography.digitSizePx * SCALE * 0.75;
+
+  // Shrink the message to fit the timer box, same policy as the digits.
+  ctx.font = `${typography.digitWeight} ${baseSize}px ${FONT_FAMILY}`;
+  const tracking = typography.labelTracking * SCALE;
+  const baseWidth =
+    ctx.measureText(expired.message).width +
+    tracking * Math.max(0, expired.message.length - 1);
+  const fit = Math.min(1, (box.width * 0.94) / baseWidth);
 
   ctx.fillStyle = colors.expiredText;
-  ctx.font = `${typography.digitWeight} ${typography.digitSizePx * SCALE * 0.75}px ${FONT_FAMILY}`;
+  ctx.font = `${typography.digitWeight} ${baseSize * fit}px ${FONT_FAMILY}`;
   ctx.textBaseline = 'middle';
-  drawTracked(ctx, expired.message, w / 2, h / 2, typography.labelTracking * SCALE);
+  drawTracked(
+    ctx,
+    expired.message,
+    box.x + box.width / 2,
+    box.y + box.height / 2,
+    tracking * fit,
+  );
   ctx.textBaseline = 'alphabetic';
 }
 
@@ -178,13 +269,17 @@ function frameToIndexed(
  * countdown never restarts from a stale value and an expired message
  * stays on screen.
  */
-export function renderCountdownGif(endMs: number, theme: ThemeTokens): Buffer {
+export async function renderCountdownGif(endMs: number, theme: ThemeTokens): Promise<Buffer> {
   ensureFontRegistered();
 
   const width = theme.layout.width * SCALE;
   const height = theme.layout.height * SCALE;
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
+
+  const background = theme.background
+    ? await loadBackgroundImage(theme.background.imagePath)
+    : null;
 
   const initialRemaining = Math.floor((endMs - Date.now()) / 1000);
 
@@ -195,7 +290,7 @@ export function renderCountdownGif(endMs: number, theme: ThemeTokens): Buffer {
     const remaining = initialRemaining - frame;
 
     if (remaining <= 0) {
-      drawExpiredFrame(ctx, theme);
+      drawExpiredFrame(ctx, theme, background);
       const { index, palette } = frameToIndexed(canvas, ctx, null);
       gif.writeFrame(index, width, height, {
         palette,
@@ -207,7 +302,7 @@ export function renderCountdownGif(endMs: number, theme: ThemeTokens): Buffer {
       break;
     }
 
-    drawCountdownFrame(ctx, theme, remaining);
+    drawCountdownFrame(ctx, theme, background, remaining);
     const { index, palette } = frameToIndexed(canvas, ctx, countdownPalette);
     countdownPalette = palette;
     gif.writeFrame(index, width, height, {

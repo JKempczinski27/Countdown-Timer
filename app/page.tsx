@@ -6,6 +6,7 @@ interface Example {
   title: string;
   note: string;
   end: string;
+  theme?: string;
 }
 
 function isoUtc(msFromNow: number): string {
@@ -34,6 +35,12 @@ function buildExamples(): Example[] {
       note: 'Renders the configured expired message — never negative numbers.',
       end: '2020-01-01T00:00:00Z',
     },
+    {
+      title: 'Creative wrap (goodgood theme)',
+      note: 'Background PNG from the creative team with the timer rendered in a reserved zone — placeholder art, see creative/SPECS.md.',
+      end: isoUtc(12 * 24 * 60 * 60 * 1000 + 6 * 60 * 60 * 1000 + 30 * 60 * 1000),
+      theme: 'goodgood',
+    },
   ];
 }
 
@@ -50,7 +57,9 @@ export default function PreviewPage() {
 
       <div style={{ display: 'grid', gap: 24, marginBottom: 32 }}>
         {examples.map((example) => {
-          const url = `/api/timer?end=${encodeURIComponent(example.end)}`;
+          const url = `/api/timer?end=${encodeURIComponent(example.end)}${
+            example.theme ? `&theme=${example.theme}` : ''
+          }`;
           return (
             <section
               key={example.title}
