@@ -17,23 +17,31 @@
      email-client image proxies; the server never logs or renders it.
   4. Keep the alt text in sync with the real deadline — it's what
      recipients see with images blocked.
+  5. Replace https://YOUR-LANDING-PAGE.example.com with the campaign's
+     landing page. The whole timer is clickable; AJO applies click
+     tracking to the link automatically.
 -->
 <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
   <tr>
     <td align="center" style="padding: 0;">
-      <img
-        src="https://YOUR-DEPLOYMENT.vercel.app/api/timer?end=2026-08-01T04:00:00Z&uid={{profile.personID}}"
-        width="320"
-        height="90"
-        alt="Sale ends August 1"
-        style="display:block; border:0; outline:none; text-decoration:none;"
-      />
+      <a href="https://YOUR-LANDING-PAGE.example.com" target="_blank" style="text-decoration:none;">
+        <img
+          src="https://YOUR-DEPLOYMENT.vercel.app/api/timer?end=2026-08-01T04:00:00Z&uid={{profile.personID}}"
+          width="320"
+          height="90"
+          alt="Sale ends August 1"
+          style="display:block; border:0; outline:none; text-decoration:none;"
+        />
+      </a>
     </td>
   </tr>
   <tr>
     <td align="center" style="padding: 8px 0 0 0; font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #111111;">
-      <!-- Live-text fallback: always present, works with images blocked -->
-      Ends Friday, August 1 at midnight ET
+      <!-- Live-text fallback: always present, works with images blocked.
+           Linked too, so the CTA survives image blocking. -->
+      <a href="https://YOUR-LANDING-PAGE.example.com" target="_blank" style="color: #111111;">
+        Ends Friday, August 1 at midnight ET &rarr;
+      </a>
     </td>
   </tr>
 </table>
