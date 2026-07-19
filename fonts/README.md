@@ -10,8 +10,8 @@ because a font is missing — it always has this file to fall back to.
 
 ## Dropping in the real brand font
 
-1. Get the licensed brand `.ttf` or `.otf` file (e.g. from the Dick's
-   Sporting Goods brand guidelines package).
+1. Get the licensed brand `.ttf` or `.otf` file (e.g. from the Golf
+   Galaxy brand guidelines package).
 2. Save it into this folder as **`brand.ttf`** or **`brand.otf`**
    (either extension works; `.ttf` is checked first).
 3. That's it — no code changes needed. `lib/fonts.ts` looks for

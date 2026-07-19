@@ -132,8 +132,9 @@ deliverability team wants per-recipient URLs for other reasons.
 All visual styling lives in **`brand.config.ts`** as typed design
 tokens — colors, typography, layout, and the expired-state message.
 Nothing is hardcoded in the drawing code. The checked-in values are
-placeholders; replace them with Dick's Sporting Goods email brand
-guideline values. Add new named themes as additional keys of `themes`
+placeholders; replace them with Golf Galaxy email brand guideline
+values (the default theme's navy is sampled from the official Golf
+Galaxy logo asset; the green accent is approximate). Add new named themes as additional keys of `themes`
 and select them with `?theme=<name>`.
 
 ### Swapping in the brand font

@@ -1,9 +1,12 @@
 /**
  * Single source of truth for all countdown timer visual styling.
  *
- * Replace the placeholder values below with real Dick's Sporting Goods
- * email brand guideline values. Nothing in the drawing code (lib/gif.ts)
- * should ever hardcode a color, font, or size — it all flows from here.
+ * Replace the placeholder values below with real Golf Galaxy email brand
+ * guideline values. The navy below is sampled from the official Golf
+ * Galaxy logo asset (#0F314F); the green accent is an approximation —
+ * confirm both against the brand kit. Nothing in the drawing code
+ * (lib/gif.ts) should ever hardcode a color, font, or size — it all
+ * flows from here.
  *
  * To add a brand font, see fonts/README.md and the "Swapping in brand
  * fonts/tokens" section of the root README.
@@ -58,12 +61,12 @@ export interface ThemeTokens {
 export const themes = {
   default: {
     colors: {
-      background: '#0B0B0B', // placeholder
-      digits: '#FFFFFF', // placeholder
-      labels: '#9CA3AF', // placeholder
-      separators: '#4B5563', // placeholder
-      expiredText: '#FFFFFF', // placeholder
-      expiredBackground: '#0B0B0B', // placeholder
+      background: '#0F314F', // Golf Galaxy navy — sampled from official logo SVG
+      digits: '#FFFFFF',
+      labels: '#4EA97C', // fairway-green accent — PLACEHOLDER, confirm vs brand kit
+      separators: '#3D5A75', // muted navy — placeholder
+      expiredText: '#FFFFFF',
+      expiredBackground: '#0F314F',
     },
     typography: {
       fontFamily: 'BrandFont', // registered via GlobalFonts, see lib/gif.ts
