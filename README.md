@@ -70,6 +70,34 @@ The preview page at `/` shows the timer at several states (days out,
 hours out, seconds from expiry, expired), displays each generated URL for
 copy-paste, and includes a datetime picker to demo arbitrary deadlines.
 
+## Campaign Builder (`/tools`)
+
+A build-time helper page for whoever sets up a send. Enter the deadline
+**once** (as a wall-clock time in ET/CT/MT/PT) and it outputs, all
+derived from the same instant so they can't drift apart:
+
+- the correct `end` value with a DST-correct timezone→UTC conversion,
+- the ready-to-paste timer image URL (theme + uid token included),
+- the WCAG-compliant `alt` text stating the deadline in words,
+- the images-blocked live-text line,
+- a copy-paste email block combining the linked image and fallback line.
+
+The conversion logic lives in `lib/deadline.ts` (pure, framework-
+agnostic, uses the `Intl` time-zone database — no extra dependencies)
+and is covered by tests including the ET EDT/EST boundary cases.
+
+## Tests
+
+```bash
+npm test           # vitest run
+npm run test:watch
+```
+
+Covers the `end` validation rules, DST-correct deadline conversion +
+URL/alt/live-text derivation, and GIF-rendering behavior (60-frame
+countdown, single frozen expired frame, intro frames, valid GIF output,
+fallback). Tests are pure/native-Node — no dev server needed.
+
 ## Deploy to Vercel
 
 ```bash
