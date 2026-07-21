@@ -53,6 +53,36 @@ whenever you set up a new campaign. With images blocked, the recipient
 still sees the deadline; with images on, they get the animated urgency on
 top of it.
 
+## Accessibility & compliance (alt text)
+
+Alt text is an HTML attribute on the `<img>` tag — it lives in the email
+snippet, **not** in the GIF the endpoint serves (there's no field in an
+image file a screen reader can read). So alt text is authored per
+campaign in the snippet, and both snippets ship with it filled in.
+
+For a countdown timer this is a genuine compliance requirement, not a
+formality (WCAG 2.1 SC 1.1.1 Non-text Content; relevant to ADA and
+Section 508 programs):
+
+- **The animation conveys nothing to assistive tech.** A screen-reader
+  user, and anyone with images off, gets only the alt text and the
+  live-text line — so those must carry the actual deadline.
+- **State the deadline in words: date, time, and timezone.** Good:
+  `alt="Sale ends Friday, August 1 at midnight ET"`. Non-compliant:
+  `alt="countdown timer"`, `alt="timer.gif"`, or an empty/missing alt.
+- **Don't describe the ticking.** Alt should convey the *information*
+  (when the offer ends), not narrate the visual ("numbers counting
+  down"). Screen-reader users need the fact, not the effect.
+- **Two layers, both required.** The `alt` attribute covers assistive
+  tech reading the image; the live-text line beneath the timer covers
+  images-blocked rendering and is itself read by screen readers. Ship
+  both, and keep both in sync with the `end` param.
+
+Because the deadline is identical for every recipient, the alt text is a
+single static string per send — no personalization needed. The one
+discipline is updating it (and the live-text line) whenever the `end`
+value changes, so they never contradict the timer.
+
 ## Timezone guidance: the `end` param is UTC
 
 The endpoint interprets `end` strictly as ISO 8601 UTC (`...Z` suffix).

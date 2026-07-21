@@ -15,8 +15,12 @@
      entry, etc.). Ask your AJO admin which attribute uniquely identifies
      the recipient. It is used ONLY for cache-busting uniqueness in
      email-client image proxies; the server never logs or renders it.
-  4. Keep the alt text in sync with the real deadline — it's what
-     recipients see with images blocked.
+  4. REQUIRED for accessibility/compliance (WCAG 1.1.1): write the alt
+     text to state the deadline in words — date, time, AND timezone —
+     because the ticking animation conveys nothing to a screen reader or
+     to recipients with images blocked. "Sale ends Friday, August 1 at
+     midnight ET" is compliant; "countdown timer" or "" is NOT. Keep it
+     in sync with the `end` param whenever the deadline changes.
   5. Replace https://YOUR-LANDING-PAGE.example.com with the campaign's
      landing page. The whole timer is clickable; AJO applies click
      tracking to the link automatically.
@@ -29,7 +33,7 @@
           src="https://YOUR-DEPLOYMENT.vercel.app/api/timer?end=2026-08-01T04:00:00Z&uid={{profile.personID}}"
           width="320"
           height="90"
-          alt="Sale ends August 1"
+          alt="Sale ends Friday, August 1 at midnight ET"
           style="display:block; border:0; outline:none; text-decoration:none;"
         />
       </a>
