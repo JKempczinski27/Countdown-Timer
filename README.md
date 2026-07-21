@@ -157,6 +157,13 @@ and **`creative/SPECS.md`** for the exact deliverable spec to hand to
 design. A missing or unreadable PNG falls back to the flat background
 color; it never breaks the endpoint.
 
+A theme can also open with an **intro animation** (`intro` tokens): the
+GIF holds on a "from" header image, crossfades into the countdown, then
+ticks down — plays once and freezes, never looping back to the intro.
+The `goodgood` theme demos a Golf Galaxy → Good Good Open opener. A
+missing header image simply skips the intro. See `creative/SPECS.md`
+for the header deliverable spec.
+
 ## Adobe integration
 
 See `adobe-embed/` for copy-paste AJO and Campaign snippets and an

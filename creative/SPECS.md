@@ -79,10 +79,30 @@ pattern is: photographic hero as a **separate static image slice in the
 email HTML** above/below the timer, and a flat graphic treatment for the
 timer strip itself. Best of both — the photo stays full-fidelity JPEG.
 
+## Optional: opening animation (intro header)
+
+A theme can open with a short animation: the GIF holds on a "from"
+header image, crossfades into the countdown creative, then ticks down.
+The bundled `golfgalaxy-header.png` is placeholder art for the Golf
+Galaxy → Good Good Open transition.
+
+If a campaign wants an intro, deliver a **second** PNG for the opening
+header to the **exact same spec as the background** above (640 × 180 px,
+opaque, sRGB). Design it as a standalone title card — it fills the whole
+canvas and has no timer zone, since the countdown hasn't appeared yet.
+The crossfade into the main creative is generated automatically; you
+only supply the two end-state PNGs. Timing (hold + fade duration) is set
+per theme in `brand.config.ts` (`intro.holdMs`, `intro.transitionMs`).
+
+Keep intro art flat/graphic for the same GIF-color-budget reasons — and
+note the intro adds frames, so it increases the animated GIF's file size
+(the Good Good demo runs ~670 KB with the intro vs ~550 KB without).
+
 ## Handoff
 
 1. Name the file after the theme: `<theme>-bg.png` (e.g.
-   `goodgood-bg.png`) and drop it in this `creative/` folder.
+   `goodgood-bg.png`), plus `<brand>-header.png` for an optional intro,
+   and drop them in this `creative/` folder.
 2. Engineering points the theme's `background.imagePath` at it (or just
    overwrites the existing file for an existing theme — no code change).
 3. Verify on the preview page (`/`): the themed example renders live,

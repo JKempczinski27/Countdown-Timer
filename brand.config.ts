@@ -56,6 +56,20 @@ export interface ThemeTokens {
   expired: {
     message: string;
   };
+  /**
+   * Optional opening animation: the GIF holds on a "from" header image,
+   * crossfades into the countdown, then runs the timer. Plays once (the
+   * GIF never loops back to the intro). If the image is missing the
+   * renderer silently skips the intro and just runs the countdown.
+   */
+  intro?: {
+    /** Full-bleed opening header PNG at physical size (see creative/SPECS.md). */
+    fromImagePath: string;
+    /** How long to hold on the opening header before the crossfade, ms. */
+    holdMs: number;
+    /** Crossfade duration from the opening header into the countdown, ms. */
+    transitionMs: number;
+  };
 }
 
 export const themes = {
@@ -125,6 +139,14 @@ export const themes = {
     },
     expired: {
       message: "IT'S TEE TIME",
+    },
+    // Opening animation: hold on the Golf Galaxy header, then crossfade
+    // into the Good Good Open creative + live countdown. Placeholder
+    // header art — real header comes from the creative team.
+    intro: {
+      fromImagePath: 'creative/golfgalaxy-header.png',
+      holdMs: 1200,
+      transitionMs: 640,
     },
   },
 } as const satisfies Record<string, ThemeTokens>;

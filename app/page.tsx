@@ -36,8 +36,8 @@ function buildExamples(): Example[] {
       end: '2020-01-01T00:00:00Z',
     },
     {
-      title: 'Creative wrap (goodgood theme)',
-      note: 'Background PNG from the creative team with the timer rendered in a reserved zone — placeholder art, see creative/SPECS.md.',
+      title: 'Creative wrap + intro (goodgood theme)',
+      note: 'Opens on a Golf Galaxy header, crossfades into the Good Good Open creative with the timer in a reserved zone, then counts down. Placeholder art — see creative/SPECS.md.',
       end: isoUtc(12 * 24 * 60 * 60 * 1000 + 6 * 60 * 60 * 1000 + 30 * 60 * 1000),
       theme: 'goodgood',
     },

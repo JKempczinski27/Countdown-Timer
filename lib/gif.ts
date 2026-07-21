@@ -16,6 +16,14 @@ const FRAME_COUNT = 60;
 const FRAME_DELAY_MS = 1000;
 const MAX_DISPLAY_DAYS = 99;
 
+/**
+ * Target per-step delay for the intro crossfade. Kept at/above ~80ms
+ * because several email clients clamp very short GIF frame delays.
+ */
+const INTRO_STEP_TARGET_MS = 80;
+const INTRO_MIN_STEPS = 4;
+const INTRO_MAX_STEPS = 15;
+
 interface Segment {
   value: string;
   label: string;
@@ -262,12 +270,85 @@ function frameToIndexed(
   return { index: applyPalette(data, resolvedPalette), palette: resolvedPalette };
 }
 
+/** Draws the state the intro crossfades *into* (countdown, or expired). */
+function drawDestinationState(
+  ctx: SKRSContext2D,
+  theme: ThemeTokens,
+  background: Image | null,
+  remaining: number,
+): void {
+  if (remaining <= 0) {
+    drawExpiredFrame(ctx, theme, background);
+  } else {
+    drawCountdownFrame(ctx, theme, background, remaining);
+  }
+}
+
 /**
- * Renders a 60-frame, 1 fps countdown GIF. Frames tick down one second
- * each; any frame at or past the deadline renders the expired state.
- * The GIF plays once (no loop) and freezes on its final frame, so a
- * countdown never restarts from a stale value and an expired message
- * stays on screen.
+ * Prepends the opening animation: a hold on the "from" header image,
+ * then a crossfade into the destination (countdown/expired) state.
+ * Each frame is quantized independently since the blend colors shift.
+ * No-ops if the header image can't be loaded, so a missing asset just
+ * yields a plain countdown rather than a broken image.
+ */
+async function writeIntroFrames(
+  gif: ReturnType<typeof GIFEncoder>,
+  theme: ThemeTokens,
+  background: Image | null,
+  initialRemaining: number,
+  width: number,
+  height: number,
+): Promise<void> {
+  if (!theme.intro) return;
+  const fromImage = await loadBackgroundImage(theme.intro.fromImagePath);
+  if (!fromImage) return;
+
+  // Offscreen render of the destination state, composited during the fade.
+  const toCanvas = createCanvas(width, height);
+  const toCtx = toCanvas.getContext('2d');
+  drawDestinationState(toCtx, theme, background, initialRemaining);
+
+  const composite = createCanvas(width, height);
+  const cctx = composite.getContext('2d');
+
+  const writeComposite = (delay: number) => {
+    const { data } = cctx.getImageData(0, 0, width, height);
+    const palette = quantize(data, 256);
+    gif.writeFrame(applyPalette(data, palette), width, height, {
+      palette,
+      delay,
+      repeat: -1,
+    });
+  };
+
+  // Hold on the opening header.
+  cctx.drawImage(fromImage, 0, 0, width, height);
+  writeComposite(theme.intro.holdMs);
+
+  // Crossfade: from header -> destination state.
+  const steps = Math.min(
+    INTRO_MAX_STEPS,
+    Math.max(INTRO_MIN_STEPS, Math.round(theme.intro.transitionMs / INTRO_STEP_TARGET_MS)),
+  );
+  const stepDelay = Math.round(theme.intro.transitionMs / steps);
+  for (let i = 1; i <= steps; i++) {
+    const t = i / (steps + 1);
+    cctx.globalAlpha = 1;
+    cctx.drawImage(fromImage, 0, 0, width, height);
+    cctx.globalAlpha = t;
+    cctx.drawImage(toCanvas, 0, 0, width, height);
+    cctx.globalAlpha = 1;
+    writeComposite(stepDelay);
+  }
+}
+
+/**
+ * Renders a countdown GIF. Optionally opens with an intro animation
+ * (see theme.intro), then runs 60 frames at 1 fps ticking down one
+ * second each; any frame at or past the deadline renders the expired
+ * state. The GIF plays once (no loop) and freezes on its final frame,
+ * so a countdown never restarts from a stale value, the intro never
+ * replays, and an expired message stays on screen.
  */
 export async function renderCountdownGif(endMs: number, theme: ThemeTokens): Promise<Buffer> {
   ensureFontRegistered();
@@ -285,6 +366,8 @@ export async function renderCountdownGif(endMs: number, theme: ThemeTokens): Pro
 
   const gif = GIFEncoder();
   let countdownPalette: PaletteColor[] | null = null;
+
+  await writeIntroFrames(gif, theme, background, initialRemaining, width, height);
 
   for (let frame = 0; frame < FRAME_COUNT; frame++) {
     const remaining = initialRemaining - frame;
