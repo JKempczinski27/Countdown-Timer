@@ -24,6 +24,14 @@ const INTRO_STEP_TARGET_MS = 80;
 const INTRO_MIN_STEPS = 4;
 const INTRO_MAX_STEPS = 15;
 
+/**
+ * Brand-safe static image shown if a render ever fails unexpectedly.
+ * The Golf Galaxy header keeps a broken render on-brand instead of
+ * surfacing a broken-image icon or bare text. Falls back to a flat
+ * message if even this asset can't load.
+ */
+const FALLBACK_IMAGE_PATH = 'creative/golfgalaxy-header.png';
+
 interface Segment {
   value: string;
   label: string;
@@ -401,9 +409,11 @@ export async function renderCountdownGif(endMs: number, theme: ThemeTokens): Pro
 
 /**
  * Minimal single-frame GIF used when rendering fails unexpectedly.
- * Static, theme-independent, and as close to unbreakable as possible.
+ * Shows the Golf Galaxy header so a failed render stays on-brand rather
+ * than surfacing a broken-image icon. Falls back to a flat message if
+ * even the header asset can't load. As close to unbreakable as possible.
  */
-export function renderFallbackGif(theme: ThemeTokens): Buffer {
+export async function renderFallbackGif(theme: ThemeTokens): Promise<Buffer> {
   ensureFontRegistered();
 
   const width = theme.layout.width * SCALE;
@@ -411,13 +421,18 @@ export function renderFallbackGif(theme: ThemeTokens): Buffer {
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
 
-  ctx.fillStyle = theme.colors.background;
-  ctx.fillRect(0, 0, width, height);
-  ctx.fillStyle = theme.colors.digits;
-  ctx.font = `${theme.typography.digitWeight} ${theme.typography.labelSizePx * SCALE * 1.4}px ${FONT_FAMILY}`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('Loading offer…', width / 2, height / 2);
+  const headerImage = await loadBackgroundImage(FALLBACK_IMAGE_PATH);
+  if (headerImage) {
+    ctx.drawImage(headerImage, 0, 0, width, height);
+  } else {
+    ctx.fillStyle = theme.colors.background;
+    ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = theme.colors.digits;
+    ctx.font = `${theme.typography.digitWeight} ${theme.typography.labelSizePx * SCALE * 1.4}px ${FONT_FAMILY}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Loading offer…', width / 2, height / 2);
+  }
 
   const gif = GIFEncoder();
   const { index, palette } = frameToIndexed(canvas, ctx, null);

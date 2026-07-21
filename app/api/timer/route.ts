@@ -78,7 +78,7 @@ export async function GET(request: NextRequest): Promise<Response> {
   } catch {
     // Internal failure must never surface a broken-image icon in an email.
     try {
-      gifBuffer = renderFallbackGif(theme);
+      gifBuffer = await renderFallbackGif(theme);
     } catch {
       // Hand-rolled 1x1 black GIF: the absolute last resort.
       gifBuffer = Buffer.from(

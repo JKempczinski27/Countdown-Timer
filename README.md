@@ -50,7 +50,10 @@ Responses:
   (640×180 physical, 320×90 logical).
 - `400` — plain-text error for bad `end` input. The endpoint never 500s
   on user-controllable input; an unexpected internal failure returns a
-  single-frame "Loading offer…" GIF rather than a broken-image icon.
+  single-frame static GIF of the Golf Galaxy header
+  (`creative/golfgalaxy-header.png`, the same asset used for the intro)
+  rather than a broken-image icon. If even that asset can't load, it
+  degrades to a flat "Loading offer…" frame.
 
 ## Quick start
 
