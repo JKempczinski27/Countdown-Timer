@@ -70,6 +70,32 @@ export interface ThemeTokens {
     /** Crossfade duration from the opening header into the countdown, ms. */
     transitionMs: number;
   };
+  /**
+   * Visual style of the countdown. 'flat' is the default single-plane
+   * render (lib/gif.ts). 'flip' is the split-flap flip-clock render
+   * (lib/flip.ts) where digit cards physically flip over on each tick.
+   * Can be overridden per-request with `?style=flip|flat`.
+   */
+  style?: 'flat' | 'flip';
+  /**
+   * Styling for the 'flip' style only. All optional — anything omitted
+   * derives from a sensible navy/white default so the flip style works
+   * on any theme without extra config.
+   */
+  flip?: {
+    /** Small kicker line above the cards, e.g. 'SALE ENDS IN'. Empty to hide. */
+    kicker?: string;
+    /** Background gradient (top → bottom) behind the cards. */
+    bgTop?: string;
+    bgBottom?: string;
+    /** Digit-card face gradient (top → bottom). */
+    cardTop?: string;
+    cardBottom?: string;
+    /** Card face color just below the seam (subtle two-tone). */
+    cardLower?: string;
+    /** How many sub-frames each flip animates over (more = smoother, bigger). */
+    flipSteps?: number;
+  };
 }
 
 export const themes = {
@@ -99,6 +125,17 @@ export const themes = {
     },
     expired: {
       message: 'OFFER ENDED',
+    },
+    // Split-flap flip-clock styling (used when style='flip' or ?style=flip).
+    // Navy/white by design — tune these to the Golf Galaxy brand kit.
+    flip: {
+      kicker: 'SALE ENDS IN',
+      bgTop: '#123A5C',
+      bgBottom: '#0B2947',
+      cardTop: '#1E4A6E',
+      cardBottom: '#15385A',
+      cardLower: '#123353',
+      flipSteps: 4,
     },
   },
 

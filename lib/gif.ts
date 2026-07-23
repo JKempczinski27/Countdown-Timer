@@ -9,6 +9,7 @@ import {
 import { GIFEncoder, quantize, applyPalette, type PaletteColor } from 'gifenc';
 import type { ThemeTokens } from '@/brand.config';
 import { ensureFontRegistered, FONT_FAMILY } from './fonts';
+import { renderFlipCountdownGif } from './flip';
 
 /** Draw at 2x logical size so digits stay crisp in email clients. */
 const SCALE = 2;
@@ -358,8 +359,16 @@ async function writeIntroFrames(
  * so a countdown never restarts from a stale value, the intro never
  * replays, and an expired message stays on screen.
  */
-export async function renderCountdownGif(endMs: number, theme: ThemeTokens): Promise<Buffer> {
+export async function renderCountdownGif(
+  endMs: number,
+  theme: ThemeTokens,
+  style: 'flat' | 'flip' = theme.style ?? 'flat',
+): Promise<Buffer> {
   ensureFontRegistered();
+
+  if (style === 'flip') {
+    return renderFlipCountdownGif(endMs, theme);
+  }
 
   const width = theme.layout.width * SCALE;
   const height = theme.layout.height * SCALE;

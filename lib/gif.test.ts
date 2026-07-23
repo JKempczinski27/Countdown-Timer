@@ -86,6 +86,27 @@ describe('renderCountdownGif', () => {
   });
 });
 
+describe('renderFlipCountdownGif (style=flip)', () => {
+  it('renders a valid GIF via the flip style', async () => {
+    const buf = await renderCountdownGif(Date.now() + 3 * 86400_000, theme, 'flip');
+    expect(isGif(buf)).toBe(true);
+  });
+
+  it('produces many diffed frames but stays email-sized (< 1MB)', async () => {
+    const buf = await renderCountdownGif(Date.now() + 3 * 86400_000, theme, 'flip');
+    // 60 holds + flip sub-frames = hundreds of frames...
+    expect(countFrames(buf)).toBeGreaterThan(100);
+    // ...yet transparency-diffing keeps the file email-safe.
+    expect(buf.byteLength).toBeLessThan(1_000_000);
+  });
+
+  it('renders a single frozen frame when already expired', async () => {
+    const buf = await renderCountdownGif(Date.parse('2020-01-01T00:00:00Z'), theme, 'flip');
+    expect(isGif(buf)).toBe(true);
+    expect(countFrames(buf)).toBe(1);
+  });
+});
+
 describe('renderFallbackGif', () => {
   it('returns a valid single-frame GIF', async () => {
     const buf = await renderFallbackGif(theme);

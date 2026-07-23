@@ -40,9 +40,15 @@ export async function GET(request: NextRequest): Promise<Response> {
 
   const theme = resolveTheme(params.get('theme'));
 
+  // `style` overrides the theme's default; anything unrecognized falls
+  // back to the theme default (or 'flat').
+  const styleParam = params.get('style');
+  const style: 'flat' | 'flip' =
+    styleParam === 'flip' ? 'flip' : styleParam === 'flat' ? 'flat' : (theme.style ?? 'flat');
+
   let gifBuffer: Buffer;
   try {
-    gifBuffer = await renderCountdownGif(parsed.endMs, theme);
+    gifBuffer = await renderCountdownGif(parsed.endMs, theme, style);
   } catch {
     // Internal failure must never surface a broken-image icon in an email.
     try {

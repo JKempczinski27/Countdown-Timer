@@ -42,6 +42,7 @@ expired message ("OFFER ENDED") instead — never negative numbers.
 | `end` | yes | ISO 8601 **UTC** deadline, e.g. `2026-08-01T04:00:00Z`. Invalid/missing → plain-text 400. |
 | `uid` | no | Opaque recipient identifier for cache-busting uniqueness in email image proxies. Never logged, never rendered. |
 | `theme` | no | Theme key from `brand.config.ts` (default `default`). Unknown values fall back to the default theme. |
+| `style` | no | `flat` (default single-plane render) or `flip` (split-flap flip-clock). Overrides the theme's `style`. |
 
 Responses:
 
@@ -195,6 +196,34 @@ The `goodgood` theme demos a Golf Galaxy → Good Good Open opener. A
 missing header image simply skips the intro. See `creative/SPECS.md`
 for the header deliverable spec.
 
+### Split-flap flip-clock style (`?style=flip`)
+
+`style=flip` (or `style: 'flip'` on a theme) renders the countdown as a
+split-flap flip clock: each digit sits on a raised navy card that
+physically flips over on the center seam as it ticks — like an airport
+board. It's built entirely from navy/white shades and lives in
+`lib/flip.ts`, with card colors, the kicker line, and the flip speed
+(`flip.flipSteps`) all as tokens under `flip` in `brand.config.ts`.
+
+Two engineering details worth knowing:
+
+- **Only the changing digit flips.** Seconds flip every tick; minutes/
+  hours/days flip only when they roll over — same as a real clock, and
+  it keeps the animation cheap.
+- **Frames are transparency-diffed.** A 60-second flip is ~300 frames,
+  which naively would be 2–3 MB. Each sub-frame is encoded as mostly-
+  transparent (only the changed card differs from the previous frame,
+  with GIF disposal set to leave-in-place), so unchanged pixels compress
+  to almost nothing — the whole animation lands around **~540 KB**,
+  email-safe. Timing sums to exactly 1000ms/second so the countdown
+  stays real-time accurate.
+
+Trade-off vs. the flat style: the flip render does more work
+(~2s vs ~0.3s per origin render) and is a larger file. The CDN strategy
+means an origin render still happens only ~once per second per deadline,
+so this is fine at volume, but lower `flip.flipSteps` if you want it
+lighter.
+
 ## Adobe integration
 
 See `adobe-embed/` for copy-paste AJO and Campaign snippets and an
@@ -211,7 +240,8 @@ plays once and freezes, so one expired frame suffices). Typical render
 time for a full 60-frame GIF is roughly **200–400 ms** on a warm
 serverless function (measure with `time curl …` against your
 deployment); already-expired requests render a single frame in a few
-milliseconds. With the CDN strategy above, origin renders are ~1/second
+milliseconds. The `flip` style is heavier (~300 frames, ~2s) — see its
+section above. With the CDN strategy above, origin renders are ~1/second
 per active deadline regardless of open volume.
 
 ## Project structure
@@ -221,10 +251,16 @@ app/
   api/timer/route.ts   # the endpoint (Node runtime, validation, headers)
   page.tsx             # preview/test harness
   preview-controls.tsx # datetime picker (client component)
+  tools/               # Campaign Builder (deadline -> URL/alt/live-text)
 brand.config.ts        # ALL visual styling — typed design tokens
 lib/
-  gif.ts               # canvas drawing + gifenc encoding
+  gif.ts               # flat-style canvas drawing + gifenc encoding
+  flip.ts              # split-flap flip-clock style + transparency-diff encoder
   fonts.ts             # font registration with graceful fallback
+  deadline.ts          # DST-correct deadline -> URL/alt/live-text helper
+  timer-request.ts     # end-param validation (pure, tested)
+  *.test.ts            # vitest suites
 fonts/                 # bundled fallback font + where brand font goes
+creative/              # background/header art + creative SPECS.md
 adobe-embed/           # AJO + Campaign snippets, integration guide
 ```

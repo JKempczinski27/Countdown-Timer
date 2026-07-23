@@ -7,6 +7,7 @@ interface Example {
   note: string;
   end: string;
   theme?: string;
+  style?: string;
 }
 
 function isoUtc(msFromNow: number): string {
@@ -41,6 +42,12 @@ function buildExamples(): Example[] {
       end: isoUtc(12 * 24 * 60 * 60 * 1000 + 6 * 60 * 60 * 1000 + 30 * 60 * 1000),
       theme: 'goodgood',
     },
+    {
+      title: 'Split-flap flip clock (?style=flip)',
+      note: 'Digit cards physically flip over on each tick, like an airport board — navy/white. Only the changing digit flips; frames are transparency-diffed to stay email-sized.',
+      end: isoUtc(3 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000 + 25 * 60 * 1000 + 9 * 1000),
+      style: 'flip',
+    },
   ];
 }
 
@@ -64,7 +71,7 @@ export default function PreviewPage() {
         {examples.map((example) => {
           const url = `/api/timer?end=${encodeURIComponent(example.end)}${
             example.theme ? `&theme=${example.theme}` : ''
-          }`;
+          }${example.style ? `&style=${example.style}` : ''}`;
           return (
             <section
               key={example.title}
